@@ -1,0 +1,21 @@
+[project]
+name = "familylink"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Thibault Ducret", email = "hello@tducret.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "browser-cookie3>=0.19.1",
+    "httpx>=0.28.1",
+    "pydantic>=2.10.3",
+]
+
+[project.scripts]
+familylink = "familylink:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

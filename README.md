@@ -8,7 +8,29 @@ A Python package to interact with Google Family Link.
 pip install familylink
 ```
 
-## Usage
+## Usage as a CLI
+
+Create a `config.csv` file with the following format:
+
+```csv
+App,Max Duration,Days,Time Ranges
+Calculator,,,                       # always allowed
+Youtube,0:10,Mon-Fri,,              # 10 minutes per day during weekdays
+Youtube,0:30,Sat-Sun,,              # 30 minutes per day on weekends
+Fortnite,1:00,Wed,13:00-18:00       # 1 hour on Wednesday, between 13:00 and 18:00
+Fortnite,1:00,Sat-Sun,09:30-18:00   # 1 hour on weekends, between 09:30 and 18:00
+Google Photos,,,0:10                # 10 minutes per day
+```
+
+The apps that are not in the list will be blocked.
+
+```bash
+python -m familylink.cli config.csv --dry-run  # Remove --dry-run to apply changes
+# or with uv
+uvx familylink config.csv --dry-run
+```
+
+## Usage as a library
 
 ### Create a client
 

@@ -15,11 +15,11 @@ Create a `config.csv` file with the following format:
 ```csv
 App,Max Duration,Days,Time Ranges
 Calculator,,,                       # always allowed
-Youtube,0:10,Mon-Fri,,              # 10 minutes per day during weekdays
-Youtube,0:30,Sat-Sun,,              # 30 minutes per day on weekends
+Youtube,0:10,Mon-Fri,               # 10 minutes per day during weekdays
+Youtube,0:30,Sat-Sun,               # 30 minutes per day on weekends
 Fortnite,1:00,Wed,13:00-18:00       # 1 hour on Wednesday, between 13:00 and 18:00
 Fortnite,1:00,Sat-Sun,09:30-18:00   # 1 hour on weekends, between 09:30 and 18:00
-Google Photos,,,0:10                # 10 minutes per day
+Google Photos,0:10,,                # 10 minutes everyday
 ```
 
 The apps that are not in the list will be blocked.

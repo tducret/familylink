@@ -2,7 +2,11 @@
 
 [![PyPI version](https://badge.fury.io/py/familylink.svg)](https://badge.fury.io/py/familylink)
 
-A Python package to interact with Google Family Link.
+A non-official Python package to interact with Google Family Link, to manage your kids' screen time.
+
+<p align="center">
+  <img src="logo.svg" alt="Family Link logo" width="200" height="200">
+</p>
 
 ## Installation
 

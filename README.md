@@ -1,5 +1,7 @@
 # Family Link
 
+[![PyPI version](https://badge.fury.io/py/familylink.svg)](https://badge.fury.io/py/familylink)
+
 A Python package to interact with Google Family Link.
 
 ## Installation

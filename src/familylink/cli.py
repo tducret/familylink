@@ -49,6 +49,11 @@ def main():
         client_kwargs["browser"] = args.browser
 
     client = FamilyLink(**client_kwargs)
+
+    if not Path(args.config_file).exists():
+        _create_default_config(client, args.config_file)
+        return
+
     config = _load_config(args.config_file)
     _apply_config(client, config, args.dry_run)
 
@@ -180,7 +185,7 @@ def _apply_config(client: FamilyLink, config: Dict, dry_run: bool = True):
             elif expected_limit is True:
                 print(f"- Setting '{app}' to unlimited")
                 if not dry_run:
-                    client.allow_app(app)
+                    client.always_allow_app(app)
             else:
                 print(f"- Setting '{app}' to {expected_limit} min (previously {limit})")
                 if not dry_run:
@@ -190,6 +195,33 @@ def _apply_config(client: FamilyLink, config: Dict, dry_run: bool = True):
             print(f"- Blocking '{app}' (previously {limit}).")
             if not dry_run:
                 client.block_app(app)
+
+
+def _create_default_config(client: FamilyLink, config_file: str):
+    """Create a default config file with all apps and 0:00 limit"""
+    app_usage = client.get_apps_and_usage()
+
+    with open(config_file, "w", newline="") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "App",
+                "Max Duration",
+                "Days",
+                "Time Ranges",
+            ],
+        )
+        writer.writeheader()
+        for app in sorted(app_usage.apps, key=lambda x: x.title):
+            writer.writerow(
+                {
+                    "App": app.title,
+                    "Max Duration": "0:00",
+                    "Days": "",
+                    "Time Ranges": "",
+                }
+            )
+    print(f"Created default config file at {config_file}")
 
 
 if __name__ == "__main__":

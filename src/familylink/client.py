@@ -2,6 +2,7 @@ import hashlib
 import json
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 import browser_cookie3
@@ -20,6 +21,7 @@ class FamilyLink:
         self,
         account_id: str | None = None,
         browser: str = "firefox",
+        cookie_file_path: Path | None = None,
     ):
         """Initialize the Family Link client.
 
@@ -27,9 +29,19 @@ class FamilyLink:
             account_id: The Google account ID to manage
                 (if not provided, the first supervised member is used)
             browser: The browser to get cookies from if sapisid not provided
+            cookie_file_path: (Optional) The path to the cookie file to use
         """
         self.account_id = account_id
-        self._cookies = getattr(browser_cookie3, browser)()
+
+        cookie_kwargs = {}
+        if cookie_file_path:
+            if not cookie_file_path.exists():
+                raise ValueError(f"Cookie file not found: {cookie_file_path}")
+            if not cookie_file_path.is_file():
+                raise ValueError(f"Cookie file is not a file: {cookie_file_path}")
+            cookie_kwargs["cookie_file"] = str(cookie_file_path.resolve())
+
+        self._cookies = getattr(browser_cookie3, browser)(**cookie_kwargs)
 
         for cookie in self._cookies:
             if cookie.name == "SAPISID" and cookie.domain == ".google.com":

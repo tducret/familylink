@@ -1,6 +1,7 @@
 import argparse
 import csv
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List
 
 from familylink import FamilyLink
@@ -22,6 +23,10 @@ def main():
         action="store_true",
         help="Do not apply changes, just print what would be done",
     )
+    parser.add_argument(
+        "--cookie-file",
+        help="Path to the cookie file to use",
+    )
     args = parser.parse_args()
 
     if args.dry_run:
@@ -29,7 +34,11 @@ def main():
         print("Dry run mode enabled. No changes will be applied.")
         print("=" * 80)
 
-    client = FamilyLink()
+    client_kwargs = {}
+    if args.cookie_file:
+        client_kwargs["cookie_file_path"] = Path(args.cookie_file)
+
+    client = FamilyLink(**client_kwargs)
     config = _load_config(args.config_file)
     _apply_config(client, config, args.dry_run)
 

@@ -27,6 +27,12 @@ def main():
         "--cookie-file",
         help="Path to the cookie file to use",
     )
+    parser.add_argument(
+        "--browser",
+        choices=["firefox", "chrome"],
+        default="firefox",
+        help="Browser to use",
+    )
     args = parser.parse_args()
 
     if args.dry_run:
@@ -35,8 +41,12 @@ def main():
         print("=" * 80)
 
     client_kwargs = {}
+
     if args.cookie_file:
         client_kwargs["cookie_file_path"] = Path(args.cookie_file)
+
+    if args.browser:
+        client_kwargs["browser"] = args.browser
 
     client = FamilyLink(**client_kwargs)
     config = _load_config(args.config_file)

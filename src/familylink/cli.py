@@ -149,7 +149,8 @@ def _apply_config(client: FamilyLink, config: Dict, dry_run: bool = True):
 
     app_usage = client.get_apps_and_usage()
 
-    # {"Always allowed app": True, "Limited app": 120, "Blocked app": False}
+    # {"Always allowed app": True, "Limited app": 120, "Blocked app": False,
+    # "Unsupervised app": None}
     current_limit_per_app = dict[str, bool | int]()
 
     for app in app_usage.apps:
@@ -163,9 +164,16 @@ def _apply_config(client: FamilyLink, config: Dict, dry_run: bool = True):
             == AlwaysAllowedState.ENABLED
         ):
             current_limit_per_app[app.title] = True
+        elif not any(
+            app.package_name.startswith(prefix)
+            for prefix in ["com.google", "com.android"]
+        ):
+            # Apps that are not supervised yet (recent installs for example)
+            current_limit_per_app[app.title] = None
 
     for app, limit in current_limit_per_app.items():
         if expected_limit := expected_limits.get(app):
+            # The app is expected to be with a limit or always allowed
             if expected_limit == limit:
                 # print(f"- ('{app}' is already set to the expected limit)")
                 pass
@@ -177,6 +185,7 @@ def _apply_config(client: FamilyLink, config: Dict, dry_run: bool = True):
                 print(f"- Setting '{app}' to {expected_limit} min (previously {limit})")
                 if not dry_run:
                     client.set_app_limit(app, expected_limit)
+
         elif limit is not False:
             print(f"- Blocking '{app}' (previously {limit}).")
             if not dry_run:

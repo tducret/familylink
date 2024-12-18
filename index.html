@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Configuration Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .add-row {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .help-text {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+        .delete-btn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+        .help-icon {
+            cursor: help;
+            color: #666;
+            margin-left: 5px;
+        }
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .drop-zone.dragover {
+            background-color: #e1e1e1;
+            border-color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1>App Configuration Editor</h1>
+    
+    <div id="dropZone" class="drop-zone">
+        Drag and drop a CSV file here or click to upload
+        <input type="file" id="fileInput" accept=".csv" style="display: none">
+    </div>
+
+    <table id="configTable">
+        <thead>
+            <tr>
+                <th>App Name <span class="help-icon" title="Enter the exact app name">ℹ️</span></th>
+                <th>Max Duration <span class="help-icon" title="Format: H:MM (e.g., 0:30, 1:15)">ℹ️</span></th>
+                <th>Days <span class="help-icon" title="Format: Mon-Fri, Sat-Sun, or leave empty for all days">ℹ️</span></th>
+                <th>Time Ranges <span class="help-icon" title="Format: HH:MM-HH:MM (e.g., 09:00-17:00)">ℹ️</span></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="configBody"></tbody>
+    </table>
+
+    <div class="add-row">
+        <button onclick="addNewRow()">Add New App</button>
+        <button onclick="saveToCSV()">Save to CSV</button>
+    </div>
+
+    <script>
+        let configData = [];
+
+        // Load initial data
+        fetch('config.csv')
+            .then(response => response.text())
+            .then(data => {
+                loadCSVData(data);
+            });
+
+        function renderTable() {
+            const tbody = document.getElementById('configBody');
+            tbody.innerHTML = '';
+            
+            configData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input type="text" value="${row.app}" onchange="updateData(${index}, 'app', this.value)"></td>
+                    <td><input type="text" value="${row.duration}" onchange="updateData(${index}, 'duration', this.value)" placeholder="H:MM"></td>
+                    <td><input type="text" value="${row.days}" onchange="updateData(${index}, 'days', this.value)" placeholder="Mon-Fri"></td>
+                    <td><input type="text" value="${row.timeRanges}" onchange="updateData(${index}, 'timeRanges', this.value)" placeholder="09:00-17:00"></td>
+                    <td><button class="delete-btn" onclick="deleteRow(${index})">Delete</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateData(index, field, value) {
+            configData[index][field] = value;
+        }
+
+        function addNewRow() {
+            configData.push({
+                app: '',
+                duration: '',
+                days: '',
+                timeRanges: ''
+            });
+            renderTable();
+        }
+
+        function deleteRow(index) {
+            configData.splice(index, 1);
+            renderTable();
+        }
+
+        function saveToCSV() {
+            let csvContent = 'App,Max Duration,Days,Time Ranges\n';
+            configData.forEach(row => {
+                csvContent += `${row.app},${row.duration},${row.days},${row.timeRanges}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'config.csv');
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = e.target.result;
+                loadCSVData(data);
+            };
+            reader.readAsText(file);
+        }
+
+        function loadCSVData(data) {
+            configData = [];
+            const rows = data.split('\n');
+            // Skip header row
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i].trim()) {
+                    const columns = rows[i].split(',');
+                    configData.push({
+                        app: columns[0],
+                        duration: columns[1],
+                        days: columns[2],
+                        timeRanges: columns[3]
+                    });
+                }
+            }
+            renderTable();
+        }
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        // Handle drag and drop events
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'text/csv') {
+                handleFile(file);
+            }
+        });
+
+        // Handle click to upload
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+    </script>
+</body>
+</html> 

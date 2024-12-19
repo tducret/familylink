@@ -1,5 +1,6 @@
+"""Family Link API models"""
+
 from enum import Enum
-from typing import List, Optional
 
 from pydantic.v1 import BaseModel, Field
 
@@ -58,15 +59,13 @@ class SupervisionSetting(BaseModel):
 
     hidden: bool = False
     hidden_set_explicitly: bool = Field(False, alias="hiddenSetExplicitly")
-    hidden_on_dumbledore_flow: Optional[bool] = Field(
-        None, alias="hiddenOnDumbledoreFlow"
-    )
-    usage_limit: Optional[UsageLimit] = Field(None, alias="usageLimit")
-    always_allowed_app_info: Optional[AlwaysAllowedAppInfo] = Field(
+    hidden_on_dumbledore_flow: bool | None = Field(None, alias="hiddenOnDumbledoreFlow")
+    usage_limit: UsageLimit | None = Field(None, alias="usageLimit")
+    always_allowed_app_info: AlwaysAllowedAppInfo | None = Field(
         None, alias="alwaysAllowedAppInfo"
     )
-    google_search_disabled: Optional[bool] = Field(None, alias="googleSearchDisabled")
-    hidden_state_locked: Optional[bool] = Field(None, alias="hiddenStateLocked")
+    google_search_disabled: bool | None = Field(None, alias="googleSearchDisabled")
+    hidden_state_locked: bool | None = Field(None, alias="hiddenStateLocked")
 
 
 class App(BaseModel):
@@ -79,11 +78,11 @@ class App(BaseModel):
     install_time_millis: str = Field(alias="installTimeMillis")
     enforced_enabled_status: str = Field(alias="enforcedEnabledStatus")
     app_source: AppSource = Field(alias="appSource")
-    supervision_capabilities: List[AppSupervisionCapability] = Field(
+    supervision_capabilities: list[AppSupervisionCapability] = Field(
         alias="supervisionCapabilities"
     )
     ad_support_status: AdSupportStatus = Field(alias="adSupportStatus")
-    device_ids: Optional[List[str]] = Field(default_factory=list, alias="deviceIds")
+    device_ids: list[str] | None = Field(default_factory=list, alias="deviceIds")
     iap_support_status: IAPSupportStatus = Field(alias="iapSupportStatus")
 
 
@@ -122,7 +121,7 @@ class DeviceDisplayInfo(BaseModel):
 class DeviceCapabilityInfo(BaseModel):
     """Capability information for a device."""
 
-    capabilities: List[str]
+    capabilities: list[str]
 
 
 class DeviceInfo(BaseModel):
@@ -143,12 +142,12 @@ class AppUsage(BaseModel):
     """App usage response model."""
 
     api_header: ApiHeader = Field(alias="apiHeader")
-    apps: List[App]
+    apps: list[App]
     last_activity_refresh_timestamp_millis: str = Field(
         alias="lastActivityRefreshTimestampMillis"
     )
-    device_info: List[DeviceInfo] = Field(alias="deviceInfo")
-    app_usage_sessions: List[AppUsageSession] = Field(alias="appUsageSessions")
+    device_info: list[DeviceInfo] = Field(alias="deviceInfo")
+    app_usage_sessions: list[AppUsageSession] = Field(alias="appUsageSessions")
 
     def get_app_title(self, package_name: str) -> str:
         """Get the title of an app."""
@@ -175,7 +174,7 @@ class Profile(BaseModel):
     family_name: str = Field(alias="familyName")
     given_name: str = Field(alias="givenName")
     standard_gender: str = Field(alias="standardGender")
-    birthday: Optional[Birthday] = None
+    birthday: Birthday | None = None
     default_profile_image_url: str = Field(alias="defaultProfileImageUrl")
 
 
@@ -189,7 +188,7 @@ class MemberSupervisionInfo(BaseModel):
 class MemberAttributes(BaseModel):
     """Member attributes."""
 
-    show_parental_password_reset: Optional[bool] = Field(
+    show_parental_password_reset: bool | None = Field(
         None, alias="showParentalPasswordReset"
     )
 
@@ -197,9 +196,9 @@ class MemberAttributes(BaseModel):
 class UiCustomizations(BaseModel):
     """UI customization settings."""
 
-    settings_group: List[str] = Field(alias="settingsGroup")
-    privacy_policy_url: Optional[str] = Field(None, alias="privacyPolicyUrl")
-    supervised_user_type: Optional[str] = Field(None, alias="supervisedUserType")
+    settings_group: list[str] = Field(alias="settingsGroup")
+    privacy_policy_url: str | None = Field(None, alias="privacyPolicyUrl")
+    supervised_user_type: str | None = Field(None, alias="supervisedUserType")
 
 
 # === Members ===
@@ -210,21 +209,17 @@ class Member(BaseModel):
     role: str
     profile: Profile
     state: str
-    age_band_label: Optional[str] = Field(None, alias="ageBandLabel")
-    member_supervision_info: Optional[MemberSupervisionInfo] = Field(
+    age_band_label: str | None = Field(None, alias="ageBandLabel")
+    member_supervision_info: MemberSupervisionInfo | None = Field(
         None, alias="memberSupervisionInfo"
     )
-    member_attributes: Optional[MemberAttributes] = Field(
-        None, alias="memberAttributes"
-    )
-    ui_customizations: Optional[UiCustomizations] = Field(
-        None, alias="uiCustomizations"
-    )
+    member_attributes: MemberAttributes | None = Field(None, alias="memberAttributes")
+    ui_customizations: UiCustomizations | None = Field(None, alias="uiCustomizations")
 
 
 class MembersResponse(BaseModel):
     """Response from the members API endpoint."""
 
-    members: List[Member]
+    members: list[Member]
     api_header: ApiHeader = Field(alias="apiHeader")
     my_user_id: str = Field(alias="myUserId")

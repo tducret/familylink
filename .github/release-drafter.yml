@@ -38,4 +38,4 @@ template: |
   ## Installation
   ```bash
   pip install familylink==$RESOLVED_VERSION
-  ``` 
+  ```

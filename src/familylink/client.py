@@ -1,14 +1,18 @@
+"""Family Link API client"""
+
 import hashlib
 import json
+import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import browser_cookie3
 import httpx
 
 from familylink.models import AlwaysAllowedState, AppUsage, MembersResponse
+
+logger = logging.getLogger(__name__)
 
 
 class FamilyLink:
@@ -106,7 +110,7 @@ class FamilyLink:
     def update_app_restrictions(
         self,
         app_name: str,
-        time_limit_minutes: Optional[int] = None,
+        time_limit_minutes: int | None = None,
         block: bool = False,
         always_allow: bool = False,
     ) -> dict:
@@ -146,53 +150,55 @@ class FamilyLink:
         return response.json()
 
     def block_app(self, name: str):
+        """Block an app."""
         self.update_app_restrictions(name, block=True)
 
     def always_allow_app(self, name: str):
+        """Always allow an app."""
         self.update_app_restrictions(name, always_allow=True)
 
     def remove_app_limit(self, name: str):
+        """Remove time limit for an app."""
         self.update_app_restrictions(name, time_limit_minutes=None)
 
     def set_app_limit(self, name: str, time_limit_minutes: int):
+        """Set time limit for an app."""
         self.update_app_restrictions(name, time_limit_minutes=time_limit_minutes)
 
     def print_usage(self):
+        """Print usage for the account."""
         resp = self.get_apps_and_usage()
 
-        print("-" * 30)
-        print("Limited apps")
-        print("-" * 30)
+        logger.info("-" * 30)
+        logger.info("Limited apps")
+        logger.info("-" * 30)
 
         for app in sorted(resp.apps, key=lambda x: x.title):
             if app.supervision_setting.usage_limit:
-                print(
+                logger.info(
                     f"{app.title}: {app.supervision_setting.usage_limit.daily_usage_limit_mins} minutes"
                 )
 
-        print()
-        print("-" * 30)
-        print("Blocked apps")
-        print("-" * 30)
+        logger.info("-" * 30)
+        logger.info("Blocked apps")
+        logger.info("-" * 30)
         for app in sorted(resp.apps, key=lambda x: x.title):
             if app.supervision_setting.hidden:
-                print(app.title)
+                logger.info(app.title)
 
-        print()
-        print("-" * 30)
-        print("Always allowed apps")
-        print("-" * 30)
+        logger.info("-" * 30)
+        logger.info("Always allowed apps")
+        logger.info("-" * 30)
         for app in sorted(resp.apps, key=lambda x: x.title):
             if app.supervision_setting.always_allowed_app_info and (
                 app.supervision_setting.always_allowed_app_info.always_allowed_state
                 == AlwaysAllowedState.ENABLED
             ):
-                print(app.title)
+                logger.info(app.title)
 
-        print()
-        print("-" * 30)
-        print("Usage per app (today)")
-        print("-" * 30)
+        logger.info("-" * 30)
+        logger.info("Usage per app (today)")
+        logger.info("-" * 30)
 
         today = datetime.now().date()
         today_usage = [
@@ -215,7 +221,7 @@ class FamilyLink:
 
             app_title = resp.get_app_title(app.app_id.android_app_package_name)
 
-            print(f"{app_title}: {hours:02d}:{minutes:02d}:{seconds:02d}")
+            logger.info(f"{app_title}: {hours:02d}:{minutes:02d}:{seconds:02d}")
 
     def _ensure_account_id(self):
         if not self.account_id:

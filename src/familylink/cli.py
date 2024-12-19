@@ -1,14 +1,19 @@
+"""Family Link CLI"""
+
 import argparse
 import csv
+import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
 from familylink import FamilyLink
 from familylink.models import AlwaysAllowedState
 
+_logger = logging.getLogger(__name__)
+
 
 def main():
+    """Main entry point for the CLI"""
     parser = argparse.ArgumentParser(
         description="Apply Family Link configuration from CSV file"
     )
@@ -36,9 +41,9 @@ def main():
     args = parser.parse_args()
 
     if args.dry_run:
-        print("=" * 80)
-        print("Dry run mode enabled. No changes will be applied.")
-        print("=" * 80)
+        _logger.info("=" * 80)
+        _logger.info("Dry run mode enabled. No changes will be applied.")
+        _logger.info("=" * 80)
 
     client_kwargs = {}
 
@@ -69,7 +74,7 @@ def _parse_duration(duration_str: str) -> int:
     return 0
 
 
-def _parse_days(days_str: str) -> List[str]:
+def _parse_days(days_str: str) -> list[str]:
     """Convert day range (e.g., 'Mon-Wed' or 'Fri') to list of days"""
     if not days_str:
         return []
@@ -98,7 +103,7 @@ def _parse_days(days_str: str) -> List[str]:
 def _load_config(config_file="config.csv"):
     apps_config = {}
 
-    with open(config_file, "r") as f:
+    with open(config_file) as f:
         reader = csv.DictReader(f)
         for row in reader:
             app = row["App"].strip()
@@ -129,7 +134,7 @@ def _load_config(config_file="config.csv"):
     return apps_config
 
 
-def _get_expected_limits(config: Dict) -> dict[str, bool | int]:
+def _get_expected_limits(config: dict) -> dict[str, bool | int]:
     expected_limits = dict[str, bool | int]()
     now = datetime.now()
     today = now.strftime("%A").lower()
@@ -149,7 +154,7 @@ def _get_expected_limits(config: Dict) -> dict[str, bool | int]:
     return expected_limits
 
 
-def _apply_config(client: FamilyLink, config: Dict, dry_run: bool = True):
+def _apply_config(client: FamilyLink, config: dict, dry_run: bool = True):
     expected_limits = _get_expected_limits(config)
 
     app_usage = client.get_apps_and_usage()
@@ -183,16 +188,18 @@ def _apply_config(client: FamilyLink, config: Dict, dry_run: bool = True):
                 # print(f"- ('{app}' is already set to the expected limit)")
                 pass
             elif expected_limit is True:
-                print(f"- Setting '{app}' to unlimited")
+                _logger.info(f"- Setting '{app}' to unlimited")
                 if not dry_run:
                     client.always_allow_app(app)
             else:
-                print(f"- Setting '{app}' to {expected_limit} min (previously {limit})")
+                _logger.info(
+                    f"- Setting '{app}' to {expected_limit} min (previously {limit})"
+                )
                 if not dry_run:
                     client.set_app_limit(app, expected_limit)
 
         elif limit is not False:
-            print(f"- Blocking '{app}' (previously {limit}).")
+            _logger.info(f"- Blocking '{app}' (previously {limit}).")
             if not dry_run:
                 client.block_app(app)
 
@@ -221,7 +228,7 @@ def _create_default_config(client: FamilyLink, config_file: str):
                     "Time Ranges": "",
                 }
             )
-    print(f"Created default config file at {config_file}")
+    _logger.info(f"Created default config file at {config_file}")
 
 
 if __name__ == "__main__":

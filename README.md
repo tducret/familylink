@@ -78,17 +78,17 @@ client.print_usage()
 # Limited apps
 # ------------------------------
 # Spotify: Music and Podcasts: 30 minutes
-# 
+#
 # ------------------------------
 # Blocked apps
 # ------------------------------
 # YouTube
-# 
+#
 # ------------------------------
 # Always allowed apps
 # ------------------------------
 # Calculator
-# 
+#
 # ------------------------------
 # Usage per app (today)
 # ------------------------------

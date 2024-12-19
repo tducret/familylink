@@ -65,7 +65,7 @@
 </head>
 <body>
     <h1>App Configuration Editor</h1>
-    
+
     <div id="dropZone" class="drop-zone">
         Drag and drop a CSV file here or click to upload
         <input type="file" id="fileInput" accept=".csv" style="display: none">
@@ -102,7 +102,7 @@
         function renderTable() {
             const tbody = document.getElementById('configBody');
             tbody.innerHTML = '';
-            
+
             configData.forEach((row, index) => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -212,4 +212,4 @@
         });
     </script>
 </body>
-</html> 
+</html>

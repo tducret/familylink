@@ -82,7 +82,7 @@ class FamilyLink:
             headers={"Content-Type": "application/json"},
         )
         response.raise_for_status()
-        return MembersResponse.model_validate(response.json())
+        return MembersResponse.validate(response.json())
 
     def get_apps_and_usage(self) -> AppUsage:
         """Get apps and usage data for the account."""
@@ -99,7 +99,7 @@ class FamilyLink:
             params=params,
         )
         response.raise_for_status()
-        app_usage = AppUsage.model_validate(response.json())
+        app_usage = AppUsage.validate(response.json())
         self._cache_app_names(app_usage)
         return app_usage
 

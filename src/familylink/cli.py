@@ -6,9 +6,41 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.theme import Theme
+
 from familylink import FamilyLink
 from familylink.models import AlwaysAllowedState
 
+# Configure rich console with custom theme
+console = Console(
+    theme=Theme(
+        {
+            "info": "cyan",
+            "warning": "yellow",
+            "error": "red bold",
+            "success": "green",
+        }
+    )
+)
+
+# Configure logging with rich handler
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    handlers=[
+        RichHandler(
+            console=console,
+            show_time=False,
+            show_path=False,
+            rich_tracebacks=True,
+            tracebacks_show_locals=True,
+        )
+    ],
+)
+# Set httpx logging to WARNING by default to hide request logs
+logging.getLogger("httpx").setLevel(logging.WARNING)
 _logger = logging.getLogger(__name__)
 
 
@@ -38,12 +70,22 @@ def main():
         default="firefox",
         help="Browser to use",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging",
+    )
     args = parser.parse_args()
 
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger("httpx").setLevel(logging.DEBUG)
+
     if args.dry_run:
-        _logger.info("=" * 80)
-        _logger.info("Dry run mode enabled. No changes will be applied.")
-        _logger.info("=" * 80)
+        console.rule("[yellow]DRY RUN MODE[/yellow]")
+        console.print("[yellow]No changes will be applied[/yellow]")
+        console.rule()
 
     client_kwargs = {}
 
@@ -156,7 +198,6 @@ def _get_expected_limits(config: dict) -> dict[str, bool | int]:
 
 def _apply_config(client: FamilyLink, config: dict, dry_run: bool = True):
     expected_limits = _get_expected_limits(config)
-
     app_usage = client.get_apps_and_usage()
 
     # {"Always allowed app": True, "Limited app": 120, "Blocked app": False,
@@ -183,23 +224,26 @@ def _apply_config(client: FamilyLink, config: dict, dry_run: bool = True):
 
     for app, limit in current_limit_per_app.items():
         if expected_limit := expected_limits.get(app):
-            # The app is expected to be with a limit or always allowed
             if expected_limit == limit:
-                # print(f"- ('{app}' is already set to the expected limit)")
-                pass
+                console.print(
+                    f"[dim]• '{app}' is already set to the expected limit[/dim]"
+                )
             elif expected_limit is True:
-                _logger.info(f"- Setting '{app}' to unlimited")
+                console.print(f"[success]• Setting '{app}' to unlimited[/success]")
                 if not dry_run:
                     client.always_allow_app(app)
             else:
-                _logger.info(
-                    f"- Setting '{app}' to {expected_limit} min (previously {limit})"
+                console.print(
+                    f"[info]• Setting '{app}' to {expected_limit} min[/info]"
+                    f"[dim] (previously {limit})[/dim]"
                 )
                 if not dry_run:
                     client.set_app_limit(app, expected_limit)
 
         elif limit is not False:
-            _logger.info(f"- Blocking '{app}' (previously {limit}).")
+            console.print(
+                f"[warning]• Blocking '{app}'[/warning][dim] (previously {limit})[/dim]"
+            )
             if not dry_run:
                 client.block_app(app)
 
@@ -228,7 +272,7 @@ def _create_default_config(client: FamilyLink, config_file: str):
                     "Time Ranges": "",
                 }
             )
-    _logger.info(f"Created default config file at {config_file}")
+    console.print(f"[success]Created default config file at {config_file}[/success]")
 
 
 if __name__ == "__main__":

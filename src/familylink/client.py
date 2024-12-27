@@ -249,7 +249,7 @@ class FamilyLink:
             return name
 
         for app_name, package_name in self._app_names.items():
-            if name.lower() in app_name.lower():
+            if name.lower() == app_name.lower():
                 return package_name
 
         raise ValueError(f"Could not find package name for app: {name}")

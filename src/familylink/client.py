@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 import browser_cookie3
+from http.cookiejar import MozillaCookieJar
 import httpx
 
 from familylink.models import AlwaysAllowedState, AppUsage, MembersResponse
@@ -37,15 +38,23 @@ class FamilyLink:
         """
         self.account_id = account_id
 
-        cookie_kwargs = {}
-        if cookie_file_path:
-            if not cookie_file_path.exists():
-                raise ValueError(f"Cookie file not found: {cookie_file_path}")
-            if not cookie_file_path.is_file():
-                raise ValueError(f"Cookie file is not a file: {cookie_file_path}")
-            cookie_kwargs["cookie_file"] = str(cookie_file_path.resolve())
+        if browser == "txt":
+            if not cookie_file_path:
+                cookie_file_path = "./cookies.txt"
 
-        self._cookies = getattr(browser_cookie3, browser)(**cookie_kwargs)
+            cookie_path = Path(cookie_file_path)
+            self._cookies = MozillaCookieJar(cookie_path)
+            self._cookies.load()
+        else:
+            cookie_kwargs = {}
+            if cookie_file_path:
+                if not cookie_file_path.exists():
+                    raise ValueError(f"Cookie file not found: {cookie_file_path}")
+                if not cookie_file_path.is_file():
+                    raise ValueError(f"Cookie file is not a file: {cookie_file_path}")
+                cookie_kwargs["cookie_file"] = str(cookie_file_path.resolve())
+
+                self._cookies = getattr(browser_cookie3, browser)(**cookie_kwargs)
 
         for cookie in self._cookies:
             if cookie.name == "SAPISID" and cookie.domain == ".google.com":
@@ -106,6 +115,137 @@ class FamilyLink:
         app_usage = AppUsage.validate(response.json())
         self._cache_app_names(app_usage)
         return app_usage
+
+    def get_time_limits(self,
+                        account_id: str | None = None,
+                        ):
+        """Get members of the family."""
+
+        if not account_id:
+            account_id = self._ensure_account_id()
+        response = self._session.get(
+            f"{self.BASE_URL}/people/{account_id}/appliedTimeLimits",
+            headers={"Content-Type": "application/json"},
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def set_time_limits_device(self,
+                        account_id: str | None = None,
+                        device_id: str = "",
+                        period_id: str = "",
+                        time_in_minutes: int = 0):
+        """Set time limit for member of the family."""
+
+        if not account_id:
+            account_id = self._ensure_account_id()
+        payload = json.dumps([None,account_id,[[None,None,8,device_id,None,None,None,None,None,None,None,[2,time_in_minutes,period_id]]],[1]])
+        response = self._session.post(
+            f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
+            content=payload
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def disable_time_limits_device(self,
+                        account_id: str | None = None,
+                        device_id: str = "",
+                        period_id: str = "",
+                        time_in_minutes: int = 0):
+        """Set time limit for member of the family."""
+
+        if not account_id:
+            account_id = self._ensure_account_id()
+        payload = json.dumps([None,account_id,[[None,None,8,device_id,None,None,None,None,None,None,None,[1,time_in_minutes,period_id]]],[1]])
+        response = self._session.post(
+            f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
+            content=payload
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def enable_time_limits_device(self,
+                        account_id: str | None = None,
+                        device_id: str = "",
+                        period_id: str = "",
+                        time_in_minutes: int = 0):
+        """Set time limit for member of the family."""
+        self.set_time_limits_device(account_id, device_id, period_id, time_in_minutes)
+
+    def lock_device(self,
+                    account_id: str | None = None,
+                    device_id: str  = ""):
+        """Lock a device"""
+        if not account_id:
+            account_id = self._ensure_account_id()
+        payload = json.dumps([None,account_id,[[None,None,1,device_id]],[1]])
+
+        response = self._session.post(
+            f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
+            content=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def unlock_device(self,
+                      account_id: str | None = None,
+                      device_id: str = ""):
+        """unlock a device"""
+        if not account_id:
+            account_id = self._ensure_account_id()
+        payload = json.dumps([None,account_id,[[None,None,4,device_id]],[1]])
+
+        self._ensure_account_id()
+        response = self._session.post(
+            f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
+            content=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def disable_downtime_device(self,
+                                 account_id: str | None = None,
+                                 device_id: str  = "",
+                                 start_hour: int = 0,
+                                 start_minute: int = 0,
+                                 end_hour: int = 0,
+                                 end_minute: int = 0,
+                                 period_id: str = ""
+                                 ):
+        """Turn off downtime for a device"""
+        if not account_id:
+            account_id = self._ensure_account_id()
+        payload = json.dumps([None,account_id,[[None,None,9,None,None,None,None,None,None,None,None,None,[1,[start_hour,end_minute],[end_hour,end_minute],period_id]]],[1]])
+
+        response = self._session.post(
+            f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
+            content=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def enable_downtime_device(self,
+                                 account_id: str | None = None,
+                                 device_id: str  = "",
+                                 start_hour: int = 0,
+                                 start_minute: int = 0,
+                                 end_hour: int = 0,
+                                 end_minute: int = 0,
+                                 period_id: str = ""
+                                 ):
+        """Turn on downtime for a device"""
+        if not account_id:
+            account_id = self._ensure_account_id()
+
+        payload = json.dumps([None,account_id,[[None,None,9,None,None,None,None,None,None,None,None,None,[2,[start_hour,end_minute],[end_hour,end_minute],period_id]]],[1]])
+
+        response = self._session.post(
+            f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
+            content=payload,
+        )
+        response.raise_for_status()
+        return response.json()
+
 
     def update_app_restrictions(
         self,

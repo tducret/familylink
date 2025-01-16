@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 import browser_cookie3
+from http.cookiejar import MozillaCookieJar
 import httpx
 
 from familylink.models import AlwaysAllowedState, AppUsage, MembersResponse
@@ -37,15 +38,23 @@ class FamilyLink:
         """
         self.account_id = account_id
 
-        cookie_kwargs = {}
-        if cookie_file_path:
-            if not cookie_file_path.exists():
-                raise ValueError(f"Cookie file not found: {cookie_file_path}")
-            if not cookie_file_path.is_file():
-                raise ValueError(f"Cookie file is not a file: {cookie_file_path}")
-            cookie_kwargs["cookie_file"] = str(cookie_file_path.resolve())
+        if browser == "txt":
+            if not cookie_file_path:
+                cookie_file_path = "./cookies.txt"
 
-        self._cookies = getattr(browser_cookie3, browser)(**cookie_kwargs)
+            cookie_path = Path(cookie_file_path)
+            self._cookies = MozillaCookieJar(cookie_path)
+            self._cookies.load()
+        else:
+            cookie_kwargs = {}
+            if cookie_file_path:
+                if not cookie_file_path.exists():
+                    raise ValueError(f"Cookie file not found: {cookie_file_path}")
+                if not cookie_file_path.is_file():
+                    raise ValueError(f"Cookie file is not a file: {cookie_file_path}")
+                cookie_kwargs["cookie_file"] = str(cookie_file_path.resolve())
+
+                self._cookies = getattr(browser_cookie3, browser)(**cookie_kwargs)
 
         for cookie in self._cookies:
             if cookie.name == "SAPISID" and cookie.domain == ".google.com":
@@ -116,7 +125,6 @@ class FamilyLink:
             headers={"Content-Type": "application/json"},
         )
         response.raise_for_status()
-        print(response.text)
         return response.json()
 
     def set_time_limits(self, device_id, period_id, time_in_minutes):

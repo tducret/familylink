@@ -116,48 +116,63 @@ class FamilyLink:
         self._cache_app_names(app_usage)
         return app_usage
 
-    def get_time_limits(self):
+    def get_time_limits(self,
+                        account_id: str | None = None,
+                        ):
         """Get members of the family."""
 
-        self._ensure_account_id()
+        if not account_id:
+            account_id = self._ensure_account_id()
         response = self._session.get(
-            f"{self.BASE_URL}/people/{self.account_id}/appliedTimeLimits",
+            f"{self.BASE_URL}/people/{account_id}/appliedTimeLimits",
             headers={"Content-Type": "application/json"},
         )
         response.raise_for_status()
         return response.json()
 
-    def set_time_limits(self, device_id, period_id, time_in_minutes):
+    def set_time_limits(self,
+                        account_id: str | None = None,
+                        device_id: str = "",
+                        period_id: str = "",
+                        time_in_minutes: int = 0):
         """Set time limit for member of the family."""
 
-        self._ensure_account_id()
-        payload = json.dumps([None,self.account_id,[[None,None,8,device_id,None,None,None,None,None,None,None,[2,time_in_minutes,period_id]]],[1]])
+        if not account_id:
+            account_id = self._ensure_account_id()
+        payload = json.dumps([None,account_id,[[None,None,8,device_id,None,None,None,None,None,None,None,[2,time_in_minutes,period_id]]],[1]])
         response = self._session.post(
-            f"{self.BASE_URL}/people/{self.account_id}/timeLimitOverrides:batchCreate",
+            f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
             headers={"Content-Type": "application/json"},
         )
         response.raise_for_status()
         return response.json()
 
-    def lock_device(self, device_id):
+    def lock_device(self,
+                    account_id: str | None = None,
+                    device_id: str  = ""):
         """Lock a device"""
-        payload = json.dumps([None,self.account_id,[[None,None,1,device_id]],[1]])
+        if not account_id:
+            account_id = self._ensure_account_id()
+        payload = json.dumps([None,account_id,[[None,None,1,device_id]],[1]])
 
-        self._ensure_account_id()
         response = self._session.post(
-            f"{self.BASE_URL}/people/{self.account_id}/timeLimitOverrides:batchCreate",
+            f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
             content=payload,
         )
         response.raise_for_status()
         return response.json()
 
-    def unlock_device(self, device_id):
+    def unlock_device(self,
+                      account_id: str | None = None,
+                      device_id: str = ""):
         """unlock a device"""
-        payload = json.dumps([None,self.account_id,[[None,None,4,device_id]],[1]])
+        if not account_id:
+            account_id = self._ensure_account_id()
+        payload = json.dumps([None,account_id,[[None,None,4,device_id]],[1]])
 
         self._ensure_account_id()
         response = self._session.post(
-            f"{self.BASE_URL}/people/{self.account_id}/timeLimitOverrides:batchCreate",
+            f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
             content=payload,
         )
         response.raise_for_status()

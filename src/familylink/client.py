@@ -142,7 +142,7 @@ class FamilyLink:
         payload = json.dumps([None,account_id,[[None,None,8,device_id,None,None,None,None,None,None,None,[2,time_in_minutes,period_id]]],[1]])
         response = self._session.post(
             f"{self.BASE_URL}/people/{account_id}/timeLimitOverrides:batchCreate",
-            headers={"Content-Type": "application/json"},
+            content=payload
         )
         response.raise_for_status()
         return response.json()

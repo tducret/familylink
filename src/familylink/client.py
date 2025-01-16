@@ -203,7 +203,7 @@ class FamilyLink:
         response.raise_for_status()
         return response.json()
 
-    def turn_off_downtime_device(self,
+    def disable_downtime_device(self,
                                  account_id: str | None = None,
                                  device_id: str  = "",
                                  start_hour: int = 0,
@@ -224,7 +224,7 @@ class FamilyLink:
         response.raise_for_status()
         return response.json()
 
-    def turn_on_downtime_device(self,
+    def enable_downtime_device(self,
                                  account_id: str | None = None,
                                  device_id: str  = "",
                                  start_hour: int = 0,
